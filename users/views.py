@@ -40,7 +40,7 @@ class UserRegisterView(FormView):
 # Сброс пароля
 class PasswordResetView(FormView):
     form_class = PasswordResetForm
-    template_name = 'registration/password_reset.html'
+    template_name = 'registration/password_reset_form.html'
     success_url = reverse_lazy('login')
 
     def form_valid(self, form):
