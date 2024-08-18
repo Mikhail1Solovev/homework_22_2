@@ -1,71 +1,109 @@
+from django.shortcuts import render, redirect
 from django.contrib.auth import get_user_model
-from django.views.generic import FormView, TemplateView, RedirectView
-from django.contrib.auth import authenticate, login, logout
-from django.urls import reverse_lazy
-from django.contrib import messages
-from django.shortcuts import redirect
-from .forms import UserRegistrationForm, PasswordResetForm
-from django.contrib.auth.forms import AuthenticationForm
-import random
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
-from django.conf import settings
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, FormView
+from django.contrib.auth.views import LoginView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from .forms import CustomUserCreationForm
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from .models import Product
+from django.views.generic import TemplateView
 
-class HomePageView(FormView):
+User = get_user_model()
+
+
+class HomePageView(TemplateView):
     template_name = 'home.html'
-    form_class = AuthenticationForm
-    success_url = reverse_lazy('profile')  # Перенаправление на страницу профиля после успешного входа
+
+
+class SignUpView(CreateView):
+    form_class = CustomUserCreationForm
+    success_url = reverse_lazy('email_verification_needed')
+    template_name = 'registration/signup.html'
 
     def form_valid(self, form):
-        email = form.cleaned_data.get('username')
-        password = form.cleaned_data.get('password')
-        user = authenticate(self.request, username=email, password=password)
-        if user is not None:
-            login(self.request, user)
-            return super().form_valid(form)
-        else:
-            messages.error(self.request, "Неверные учетные данные. Пожалуйста, попробуйте снова.")
-            return self.form_invalid(form)
-
-# Регистрация пользователя
-class UserRegisterView(FormView):
-    form_class = UserRegistrationForm
-    template_name = 'registration/register.html'
-    success_url = reverse_lazy('home')  # Перенаправление на главную страницу после успешной регистрации
-
-    def form_valid(self, form):
-        user = form.save()
-        login(self.request, user)  # Автоматический вход в систему после регистрации
+        user = form.save(commit=False)
+        user.is_active = False
+        user.save()
+        self.send_verification_email(user)
         return super().form_valid(form)
 
-# Сброс пароля
-class PasswordResetView(FormView):
-    form_class = PasswordResetForm
-    template_name = 'registration/password_reset_form.html'
-    success_url = reverse_lazy('login')
-
-    def form_valid(self, form):
-        email = form.cleaned_data['email']
-        user = get_user_model().objects.get(email=email)
-        new_password = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=8))
-        user.set_password(new_password)
-        user.save()
-
+    def send_verification_email(self, user):
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        verification_link = self.request.build_absolute_uri(
+            reverse_lazy('verify_email', kwargs={'uidb64': uid, 'token': token})
+        )
         send_mail(
-            'Новый пароль',
-            f'Ваш новый пароль: {new_password}',
-            settings.DEFAULT_FROM_EMAIL,
+            'Подтверждение регистрации',
+            f'Перейдите по ссылке для подтверждения регистрации: {verification_link}',
+            'no-reply@example.com',
             [user.email],
         )
+
+
+def verify_email(request, uidb64, token):
+    try:
+        uid = force_text(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and default_token_generator.check_token(user, token):
+        user.is_active = True
+        user.save()
+        return redirect('login')
+    else:
+        return render(request, 'registration/verification_failed.html')
+
+
+class CustomLoginView(LoginView):
+    def form_valid(self, form):
+        if form.get_user().is_active:
+            return super().form_valid(form)
+        else:
+            return redirect('email_verification_needed')
+
+
+def reset_password(request):
+    email = request.POST['email']
+    user = User.objects.get(email=email)
+    new_password = User.objects.make_random_password()
+    user.set_password(new_password)
+    user.save()
+    send_mail(
+        'Новый пароль',
+        f'Ваш новый пароль: {new_password}',
+        'no-reply@example.com',
+        [email],
+    )
+    return redirect('password_reset_done')
+
+
+class ProductListView(LoginRequiredMixin, ListView):
+    model = Product
+    template_name = 'products/product_list.html'
+
+
+class ProductCreateView(LoginRequiredMixin, CreateView):
+    model = Product
+    template_name = 'products/product_form.html'
+
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
         return super().form_valid(form)
 
-# Страница профиля (пример)
-class ProfileView(TemplateView):
-    template_name = 'profile.html'
 
-# Класс-представление для выхода из системы
-class LogoutView(RedirectView):
-    url = reverse_lazy('home')  # Перенаправление на главную страницу после выхода
+class ProductUpdateView(LoginRequiredMixin, UpdateView):
+    model = Product
+    template_name = 'products/product_form.html'
 
-    def get(self, request, *args, **kwargs):
-        logout(request)
-        return super().get(request, *args, **kwargs)
+
+class ProductDeleteView(LoginRequiredMixin, DeleteView):
+    model = Product
+    template_name = 'products/product_confirm_delete.html'
+    success_url = reverse_lazy('product_list')
