@@ -9,16 +9,13 @@ from django.views.generic import CreateView, FormView
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import CustomUserCreationForm
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from .models import Product
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, ListView, UpdateView, DeleteView
 
 User = get_user_model()
 
-
 class HomePageView(TemplateView):
     template_name = 'home.html'
-
 
 class SignUpView(CreateView):
     form_class = CustomUserCreationForm
@@ -45,10 +42,9 @@ class SignUpView(CreateView):
             [user.email],
         )
 
-
 def verify_email(request, uidb64, token):
     try:
-        uid = force_text(urlsafe_base64_decode(uidb64))
+        uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
@@ -60,14 +56,12 @@ def verify_email(request, uidb64, token):
     else:
         return render(request, 'registration/verification_failed.html')
 
-
 class CustomLoginView(LoginView):
     def form_valid(self, form):
         if form.get_user().is_active:
             return super().form_valid(form)
         else:
             return redirect('email_verification_needed')
-
 
 def reset_password(request):
     email = request.POST['email']
@@ -83,25 +77,23 @@ def reset_password(request):
     )
     return redirect('password_reset_done')
 
-
 class ProductListView(LoginRequiredMixin, ListView):
     model = Product
     template_name = 'products/product_list.html'
 
-
 class ProductCreateView(LoginRequiredMixin, CreateView):
     model = Product
+    fields = ['name', 'description']
     template_name = 'products/product_form.html'
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
         return super().form_valid(form)
 
-
 class ProductUpdateView(LoginRequiredMixin, UpdateView):
     model = Product
+    fields = ['name', 'description']
     template_name = 'products/product_form.html'
-
 
 class ProductDeleteView(LoginRequiredMixin, DeleteView):
     model = Product
