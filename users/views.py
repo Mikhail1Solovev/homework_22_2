@@ -65,16 +65,19 @@ class CustomLoginView(LoginView):
 
 def reset_password(request):
     email = request.POST['email']
-    user = User.objects.get(email=email)
-    new_password = User.objects.make_random_password()
-    user.set_password(new_password)
-    user.save()
-    send_mail(
-        'Новый пароль',
-        f'Ваш новый пароль: {new_password}',
-        'no-reply@example.com',
-        [email],
-    )
+    try:
+        user = User.objects.get(email=email)
+        new_password = User.objects.make_random_password()
+        user.set_password(new_password)
+        user.save()
+        send_mail(
+            'Новый пароль',
+            f'Ваш новый пароль: {new_password}',
+            'no-reply@example.com',
+            [email],
+        )
+    except User.DoesNotExist:
+        pass
     return redirect('password_reset_done')
 
 class ProductListView(LoginRequiredMixin, ListView):
