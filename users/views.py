@@ -5,12 +5,12 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, FormView
+from django.views.generic import CreateView, FormView, ListView, UpdateView, DeleteView
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import CustomUserCreationForm
 from .models import Product
-from django.views.generic import TemplateView, ListView, UpdateView, DeleteView
+from django.views.generic import TemplateView
 
 User = get_user_model()
 
@@ -24,7 +24,7 @@ class SignUpView(CreateView):
 
     def form_valid(self, form):
         user = form.save(commit=False)
-        user.is_active = False
+        user.is_active = False  # Пока не подтвержден
         user.save()
         self.send_verification_email(user)
         return super().form_valid(form)
@@ -50,7 +50,7 @@ def verify_email(request, uidb64, token):
         user = None
 
     if user is not None and default_token_generator.check_token(user, token):
-        user.is_active = True
+        user.is_active = True  # Активировать учетную запись
         user.save()
         return redirect('login')
     else:
