@@ -58,7 +58,7 @@ def verify_email(request, uidb64, token):
 
 class CustomLoginView(LoginView):
     def form_valid(self, form):
-        if form.get_user().is_active:
+        if form.get_user().is_active():
             return super().form_valid(form)
         else:
             return redirect('email_verification_needed')
@@ -73,7 +73,7 @@ def reset_password(request):
         send_mail(
             'Новый пароль',
             f'Ваш новый пароль: {new_password}',
-            'no-reply@example.com',
+            'mihan10986@yandex.ru',
             [email],
         )
     except User.DoesNotExist:
@@ -102,3 +102,6 @@ class ProductDeleteView(LoginRequiredMixin, DeleteView):
     model = Product
     template_name = 'products/product_confirm_delete.html'
     success_url = reverse_lazy('product_list')
+
+class EmailVerificationNeededView(TemplateView):
+    template_name = 'registration/email_verification_needed.html'

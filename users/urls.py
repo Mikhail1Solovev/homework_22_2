@@ -1,10 +1,11 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
+from .views import EmailVerificationNeededView
 
 urlpatterns = [
     path('signup/', views.SignUpView.as_view(), name='signup'),
-    path('register/', views.SignUpView.as_view(), name='register'),  # Оставлено для удобства
+    path('register/', views.SignUpView.as_view(), name='register'),
     path('verify/<uidb64>/<token>/', views.verify_email, name='verify_email'),
     path('login/', views.CustomLoginView.as_view(), name='login'),
     path('reset_password/', views.reset_password, name='reset_password'),
@@ -16,4 +17,5 @@ urlpatterns = [
     path('products/create/', views.ProductCreateView.as_view(), name='product_create'),
     path('products/<pk>/update/', views.ProductUpdateView.as_view(), name='product_update'),
     path('products/<pk>/delete/', views.ProductDeleteView.as_view(), name='product_delete'),
+    path('email_verification_needed/', EmailVerificationNeededView.as_view(), name='email_verification_needed'),
 ]
