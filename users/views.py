@@ -39,7 +39,7 @@ class SignUpView(CreateView):
         send_mail(
             'Подтверждение регистрации',
             f'Перейдите по ссылке для подтверждения регистрации: {verification_link}',
-            settings.EMAIL_HOST_USER,  # Используем email из настроек
+            settings.EMAIL_HOST_USER,
             [user.email],
         )
 
@@ -51,7 +51,7 @@ def verify_email(request, uidb64, token):
         user = None
 
     if user and (urlsafe_base64_decode(token) == force_bytes(user.email)):
-        user.is_active = True  # Активировать учетную запись
+        user.is_active = True
         user.save()
         return redirect('login')
     else:
@@ -76,7 +76,7 @@ def reset_password(request):
         send_mail(
             'Новый пароль',
             f'Ваш новый пароль: {new_password}',
-            settings.EMAIL_HOST_USER,  # Используем email из настроек
+            settings.EMAIL_HOST_USER,
             [email],
         )
     except User.DoesNotExist:
