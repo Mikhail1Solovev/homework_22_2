@@ -8,6 +8,7 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, FormView, ListView, UpdateView, DeleteView
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.conf import settings
 from .forms import CustomUserCreationForm
 from .models import Product
 from django.views.generic import TemplateView
@@ -30,7 +31,7 @@ class SignUpView(CreateView):
         return super().form_valid(form)
 
     def send_verification_email(self, user):
-        token = default_token_generator.make_token(user)
+        token = urlsafe_base64_encode(force_bytes(user.email))
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         verification_link = self.request.build_absolute_uri(
             reverse_lazy('verify_email', kwargs={'uidb64': uid, 'token': token})
@@ -38,7 +39,7 @@ class SignUpView(CreateView):
         send_mail(
             'Подтверждение регистрации',
             f'Перейдите по ссылке для подтверждения регистрации: {verification_link}',
-            'no-reply@example.com',
+            settings.EMAIL_HOST_USER,  # Используем email из настроек
             [user.email],
         )
 
@@ -49,7 +50,7 @@ def verify_email(request, uidb64, token):
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
 
-    if user is not None and default_token_generator.check_token(user, token):
+    if user and (urlsafe_base64_decode(token) == force_bytes(user.email)):
         user.is_active = True  # Активировать учетную запись
         user.save()
         return redirect('login')
@@ -57,8 +58,10 @@ def verify_email(request, uidb64, token):
         return render(request, 'registration/verification_failed.html')
 
 class CustomLoginView(LoginView):
+    template_name = 'registration/login.html'
+
     def form_valid(self, form):
-        if form.get_user().is_active():
+        if form.get_user().is_active:
             return super().form_valid(form)
         else:
             return redirect('email_verification_needed')
@@ -73,7 +76,7 @@ def reset_password(request):
         send_mail(
             'Новый пароль',
             f'Ваш новый пароль: {new_password}',
-            'mihan10986@yandex.ru',
+            settings.EMAIL_HOST_USER,  # Используем email из настроек
             [email],
         )
     except User.DoesNotExist:
