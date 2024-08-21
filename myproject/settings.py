@@ -129,6 +129,8 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+
+
 AUTH_USER_MODEL = 'users.CustomUser'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -138,3 +140,5 @@ EMAIL_HOST_USER = 'mihan10986@yandex.ru'
 EMAIL_HOST_PASSWORD = 'wrsgpvmghevoakva'
 EMAIL_USE_TLS = False
 EMAIL_USE_SSL = True
+
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
