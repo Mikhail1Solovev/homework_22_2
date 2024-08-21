@@ -17,7 +17,7 @@ class ProductListView(LoginRequiredMixin, ListView):
     template_name = 'products/product_list.html'
 
 
-# Представление для детализации продукта
+
 class ProductDetailView(LoginRequiredMixin, DetailView):
     model = Product
     template_name = 'products/product_detail.html'
