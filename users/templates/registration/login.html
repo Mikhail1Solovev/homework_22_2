@@ -6,11 +6,22 @@
     <title>Вход</title>
 </head>
 <body>
-    <h1>Вход</h1>
-    <form method="post">
+    <h1>Вход в систему</h1>
+    <form method="post" action="{% url 'login' %}">
         {% csrf_token %}
         {{ form.as_p }}
+        {% if form.non_field_errors %}
+            <div class="error">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
         <button type="submit">Войти</button>
     </form>
+    <p>
+        <a href="{% url 'password_reset' %}">Забыли пароль?</a>
+    </p>
+    <p>
+        <a href="{% url 'register' %}">Нет аккаунта? Зарегистрируйтесь</a>
+    </p>
 </body>
 </html>

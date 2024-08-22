@@ -1,12 +1,18 @@
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Войти</button>
-</form>
+{% extends 'base_generic.html' %}
 
-<p>
-    <a href="{% url 'password_reset' %}">Не помню пароль</a>
-</p>
-<p>
-    <a href="{% url 'register' %}">Нет аккаунта? Зарегистрируйтесь</a>
-</p>
+{% block content %}
+  <h1>Добро пожаловать на наш сайт!</h1>
+  <p>Для продолжения, пожалуйста, войдите в систему или зарегистрируйтесь.</p>
+
+  <div>
+    <a href="{% url 'login' %}">
+      <button type="button">Войти</button>
+    </a>
+    <a href="{% url 'register' %}">
+      <button type="button">Регистрация</button>
+    </a>
+    <a href="{% url 'password_reset' %}">
+      <button type="button">Забыл пароль</button>
+    </a>
+  </div>
+{% endblock %}
