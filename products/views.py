@@ -1,6 +1,23 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 from .models import Product
+from django.core.cache import cache
+
+# Сервисная функция для получения категорий с низкоуровневым кешированием
+def get_cached_categories():
+    categories = cache.get('categories')
+    if not categories:
+        categories = list(Category.objects.all())
+        cache.set('categories', categories, 60 * 15)  # Кеширование на 15 минут
+    return categories
+
+@method_decorator(cache_page(60 * 15), name='dispatch')
+class ProductDetailView(LoginRequiredMixin, DetailView):
+    model = Product
+    template_name = 'products/product_detail.html'
+
 
 class ProductCreateView(LoginRequiredMixin, CreateView):
     model = Product
@@ -11,14 +28,10 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
+@method_decorator(cache_page(60 * 15), name='dispatch')
 class ProductListView(LoginRequiredMixin, ListView):
     model = Product
     template_name = 'products/product_list.html'
-
-
-class ProductDetailView(LoginRequiredMixin, DetailView):
-    model = Product
-    template_name = 'products/product_detail.html'
 
 
 class ProductUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
