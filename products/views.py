@@ -5,12 +5,12 @@ from django.utils.decorators import method_decorator
 from .models import Product
 from django.core.cache import cache
 
-# Сервисная функция для получения категорий с низкоуровневым кешированием
+
 def get_cached_categories():
     categories = cache.get('categories')
     if not categories:
         categories = list(Category.objects.all())
-        cache.set('categories', categories, 60 * 15)  # Кеширование на 15 минут
+        cache.set('categories', categories, 60 * 15)
     return categories
 
 @method_decorator(cache_page(60 * 15), name='dispatch')
