@@ -9,7 +9,15 @@
 
 ## Установка
 
-1. Клонируйте репозиторий:
-   ```bash
-   git clone https://github.com/Mikhail1Solovev/homework_22_2.git
-   cd homework_22_2
+### 1.Клонируйте репозиторий:
+```bash
+git clone https://github.com/Mikhail1Solovev/homework_22_2.git
+cd homework_22_2
+```
+
+### 2. Настройте переменные окружения:
+Создайте файл .env в корневом каталоге проекта, скопировав шаблон:
+
+```bash
+cp .env.example .env
+Заполните файл .env вашими значениями.
